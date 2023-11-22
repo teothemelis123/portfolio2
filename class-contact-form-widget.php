@@ -41,7 +41,7 @@ class Contact_Form {
 	 */
 	public function contact_callback( $atts ): string {
 		if ( ! is_ssl() && ! WP_DEBUG ) {
-			( new \WP_FoodTec\Includes\Libraries\Error )->report_not_secure();
+			( new Includes\Libraries\Error )->report_not_secure();
 			return '';
 		}
 
@@ -55,15 +55,15 @@ class Contact_Form {
 			$atts
 		);
 
-		$html_helpers = new \WP_FoodTec\Includes\Libraries\Html_Helpers();
+		$html_helpers = new Includes\Libraries\Html_Helpers();
 
-		$config = ( new \WP_FoodTec\Includes\Libraries\Requests\Marketing\Config )->request();
+		$config = ( new Includes\Libraries\Requests\Marketing\Config )->request();
 		$stores = $config->response->stores;
 
-		return ( new \WP_FoodTec\Includes\Libraries\Template )->load(
+		return ( new Includes\Libraries\Template )->load(
 			'contact.php',
 			array(
-				'recaptcha'     => ( new \WP_FoodTec\Includes\Libraries\Google_Recaptcha )->html( $atts['theme'] ),
+				'recaptcha'     => ( new Includes\Libraries\Google_Recaptcha )->html( $atts['theme'] ),
 				'store_select'  => filter_var( $atts['store_select'], FILTER_VALIDATE_BOOLEAN ) ? $html_helpers->get_simple_store_select( $stores ) : null,
 				'has_phone'     => filter_var( $atts['has_phone'], FILTER_VALIDATE_BOOLEAN ),
 				'needs_subject' => filter_var( $atts['needs_subject'], FILTER_VALIDATE_BOOLEAN ),
@@ -118,7 +118,7 @@ class Contact_Form {
 			),
 		);
 
-		$params = ( new \WP_FoodTec\Includes\Libraries\Ajax_Validator )->validate( $ajax_options );
+		$params = ( new Includes\Libraries\Ajax_Validator )->validate( $ajax_options );
 
 		$message = '';
 
