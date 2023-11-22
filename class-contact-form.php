@@ -1,6 +1,6 @@
 <?php
 /**
- * Contact shortcode
+ * Contact Form widget
  *
  * @category Wodrpress-Plugins
  * @package  WP-FoodTec
@@ -10,182 +10,117 @@
  * @since    1.0.0
  */
 
-namespace WP_FoodTec\Includes\Shortcodes;
+namespace WP_FoodTec\Includes\Widgets;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Contact shortcode class
+ * Adds Contact Form widget.
  */
-class Contact_Form {
+class Contact_Form extends \WP_Widget {
 	/**
-	 * Constructor
+	 * Register widget with WordPress.
 	 */
 	public function __construct() {
-		add_shortcode( 'foodtec_contact', array( $this, 'contact_callback' ) );
-
-		add_action( 'wp_ajax_contact', array( $this, 'contact' ) );
-		add_action( 'wp_ajax_nopriv_contact', array( $this, 'contact' ) );
-
-		add_action( 'register_shortcode_ui', array( $this, 'shortcode_foodtec_contact' ) );
+		parent::__construct( 'wp_foodtec_contact_widget', __( 'FoodTec Contact', 'wp-foodtec' ) );
 	}
 
 	/**
-	 * The foodtec_contact shortcode callback function.
+	 * Back-end widget form.
 	 *
-	 * @param array $atts The shortcode attributes.
+	 * @see WP_Widget::form()
 	 *
-	 * @return string
+	 * @param array $instance Previously saved values from database.
 	 */
-	public function contact_callback( $atts ): string {
-		if ( ! is_ssl() && ! WP_DEBUG ) {
-			( new \WP_FoodTec\Includes\Libraries\Error )->report_not_secure();
-			return '';
-		}
+	public function form( $instance ) {
+		$instance = wp_parse_args( (array) $instance, $this->get_defaults() );
 
-		$atts = shortcode_atts(
-			array(
-				'theme'         => 'light',
-				'has_phone'     => false,
-				'store_select'  => false,
-				'needs_subject' => false,
-			),
-			$atts
-		);
+		$title         = esc_attr( $instance['title'] );
+		$needs_subject = esc_attr( $instance['needs_subject'] );
+		$theme         = esc_attr( $instance['theme'] ) ?>
 
-		$html_helpers = new \WP_FoodTec\Includes\Libraries\Html_Helpers();
+		<p>
+		<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e( 'Widget Title', 'wp-foodtec' ); ?></label>
+		<input class="widefat" id="<?php echo $this->get_field_id( 'title' ); ?>" name="<?php echo $this->get_field_name( 'title' ); ?>" type="text" value="<?php echo $title; ?>" />
+		</p>
+		<p>
+		<input class="widefat" id="<?php echo $this->get_field_id( 'needs_subject' ); ?>" name="<?php echo $this->get_field_name( 'needs_subject' ); ?>" type="checkbox" <?php checked( $needs_subject, 'on', true ); ?> />
+		<label for="<?php echo $this->get_field_id( 'needs_subject' ); ?>"><?php _e( 'Ask for subject', 'wp-foodtec' ); ?></label>
+		</p>
+		<p>
+		<label for="<?php echo $this->get_field_id( 'theme' ); ?>"><?php _e( 'Recaptcha Theme', 'wp-foodtec' ); ?></label>
+		<select class="widefat" id="<?php echo $this->get_field_id( 'theme' ); ?>" name="<?php echo $this->get_field_name( 'theme' ); ?>">
+			<option value="light" <?php selected( $theme, 'light' ); ?>><?php _e( 'Light', 'wp-foodtec' ); ?></option>
+			<option value="dark" <?php selected( $theme, 'dark' ); ?>><?php _e( 'Dark', 'wp-foodtec' ); ?></option>
+		</select>
+		</p>
 
-		$config = ( new \WP_FoodTec\Includes\Libraries\Requests\Marketing\Config )->request();
-		$stores = $config->response->stores;
-
-		return ( new \WP_FoodTec\Includes\Libraries\Template )->load(
-			'contact.php',
-			array(
-				'recaptcha'     => ( new \WP_FoodTec\Includes\Libraries\Google_Recaptcha )->html( $atts['theme'] ),
-				'store_select'  => filter_var( $atts['store_select'], FILTER_VALIDATE_BOOLEAN ) ? $html_helpers->get_simple_store_select( $stores ) : null,
-				'has_phone'     => filter_var( $atts['has_phone'], FILTER_VALIDATE_BOOLEAN ),
-				'needs_subject' => filter_var( $atts['needs_subject'], FILTER_VALIDATE_BOOLEAN ),
-				'nonce'         => wp_create_nonce( 'contact_nonce' ),
-			)
-		);
+		<?php
+		return 'noform';
 	}
 
 	/**
-	 * Sends the email.
+	 * Sanitize widget form values as they are saved.
 	 *
-	 * @return void
+	 * @see WP_Widget::update()
+	 *
+	 * @param array $new_instance Values just sent to be saved.
+	 * @param array $old_instance Previously saved values from database.
+	 *
+	 * @return array Updated safe values to be saved.
 	 */
-	public function contact() {
-		$ajax_options = array(
-			'nonce'           => 'contact_nonce',
-			'recaptcha'       => true,
-			'ssl'             => true,
-			'query_arguments' => array(
-				'fullName' => array(
-					'display_name'      => __( 'Name', 'wp-foodtec' ),
-					'sanitize_function' => 'sanitize_text_field',
-					'required'          => false,
-				),
-				'phone'    => array(
-					'display_name'      => __( 'Phone Number', 'wp-foodtec' ),
-					'sanitize_function' => 'sanitize_text_field',
-					'required'          => false,
-				),
-				'store'    => array(
-					'display_name'      => __( 'Location', 'wp-foodtec' ),
-					'sanitize_function' => 'sanitize_text_field',
-					'encoding_function' => 'base64_decode',
-					'required'          => false,
-				),
-				'email'    => array(
-					'display_name'      => __( 'Email', 'wp-foodtec' ),
-					'sanitize_function' => 'sanitize_email',
-					'required'          => true,
-				),
-				'subject'  => array(
-					'display_name'      => __( 'Subject', 'wp-foodtec' ),
-					'sanitize_function' => 'sanitize_text_field',
-					'required'          => false,
-				),
-				'message'  => array(
-					'display_name'      => __( 'Message', 'wp-foodtec' ),
-					'sanitize_function' => 'sanitize_textarea_field',
-					'encoding_function' => 'stripslashes',
-					'required'          => true,
-				),
-			),
-		);
+	public function update( $new_instance, $old_instance ) {
+		$instance = $old_instance;
 
-		$params = ( new \WP_FoodTec\Includes\Libraries\Ajax_Validator )->validate( $ajax_options );
+		$instance['title']         = strip_tags( $new_instance['title'] );
+		$instance['needs_subject'] = strip_tags( $new_instance['needs_subject'] );
+		$instance['theme']         = strip_tags( $new_instance['theme'] );
 
-		$message = '';
-
-		foreach ( $params as $key => $value ) {
-			$message .= "<strong>{$ajax_options['query_arguments'][$key]['display_name']}:</strong> $value<br>";
-		}
-
-		$headers = array( "Reply-To: {$params['fullName']} <{$params['email']}>" );
-
-		$sendmail = wp_mail( get_option( 'foodtec_corporate_email' ), 'Corporate Contact Form', $message, $headers );
-
-		if ( $sendmail ) {
-			exit( json_encode( 200 ) );
-		}
-
-		exit( 'Something went wrong. Please try again.' );
+		return $instance;
 	}
 
 	/**
-	 * Registers the shortcode UI.
+	 * Front-end display of widget.
 	 *
-	 * @see https://github.com/wp-shortcake/Shortcake/blob/master/dev.php
+	 * @see WP_Widget::widget()
 	 *
-	 * @return void
+	 * @param array $args     Widget arguments.
+	 * @param array $instance Saved values from database.
 	 */
-	public function shortcode_foodtec_contact() {
-		$fields = array(
-			array(
-				'label'   => esc_html__( 'Recaptcha Theme', 'wp-foodtec' ),
-				'attr'    => 'theme',
-				'type'    => 'select',
-				'value'   => 'light',
-				'options' => array(
-					array(
-						'value' => 'light',
-						'label' => esc_html__( 'Light', 'wp-foodtec' ),
-					),
-					array(
-						'value' => 'dark',
-						'label' => esc_html__( 'Dark', 'wp-foodtec' ),
-					),
-				),
-			),
-			array(
-				'label' => esc_html__( 'Ask Location', 'wp-foodtec' ),
-				'attr'  => 'store_select',
-				'type'  => 'checkbox',
-			),
-			array(
-				'label' => esc_html__( 'Ask Phone Number', 'wp-foodtec' ),
-				'attr'  => 'has_phone',
-				'type'  => 'checkbox',
-			),
-			array(
-				'label' => esc_html__( 'Require Subject', 'wp-foodtec' ),
-				'attr'  => 'needs_subject',
-				'type'  => 'checkbox',
-			),
-		);
+	public function widget( $args, $instance ) {
+		$instance = wp_parse_args( (array) $instance, $this->get_defaults() );
 
-		$shortcode_ui_args = array(
-			'label'         => esc_html__( 'Contact Form', 'wp-foodtec' ),
-			'listItemImage' => 'dashicons-email',
-			'attrs'         => $fields,
-		);
+		$title         = apply_filters( 'widget_title', $instance['title'] );
+		$needs_subject = esc_attr( $instance['needs_subject'] );
+		$theme         = esc_attr( $instance['theme'] );
 
-		// @phan-suppress-next-line PhanUndeclaredFunction
-		shortcode_ui_register_for_shortcode( 'foodtec_contact', $shortcode_ui_args );
+		echo $args['before_widget'];
+
+		echo '<div class="widget-contact wp_widget_plugin_box">';
+
+		if ( $title ) {
+			echo $args['before_title'] . $title . $args['after_title'];
+		}
+
+		echo do_shortcode( '[foodtec_contact needs_subject="' . $needs_subject . '"  theme="' . $theme . '"/]' );
+
+		echo '</div>';
+
+		echo $args['after_widget'];
+	}
+
+	/**
+	 * Returns the widget default options.
+	 *
+	 * @return array
+	 */
+	public function get_defaults() {
+		return array(
+			'title'         => __( 'Contact', 'wp-foodtec' ),
+			'needs_subject' => false,
+			'theme'         => 'light',
+		);
 	}
 }
