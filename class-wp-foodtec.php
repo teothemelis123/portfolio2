@@ -217,43 +217,8 @@ class WP_FoodTec {
 	 */
 	private function register_shortcodes() {
 		$shortcodes = array(
-			'App',
-			'Register_Form',
-			'Signup_Form',
-			'Subscribe_Form',
-			'Privacy_Policy',
-			'Store_List_Collapse',
-			'Store_Info',
-			'Map',
-			'Carousel',
-			'Gift_Card_Balance_Form',
-			'Dynamic_Contact_Form',
 			'Contact_Form',
-			'Store_Menu',
-			'Store_Full_Menu',
-			'Store_Hours',
-			'Order_Tracker',
-			'Button',
-			'Order_Button',
-			'Login_Form',
-			'Reset_Password_Form',
-			'Featured_Comments',
-			'Store_List',
-			'Store_Url',
-			'Store_Phone_Number',
-			'Order_Types',
-			'Account',
-			'Rewards',
-			'Subscription_Matrix',
-			'Rewards_Block',
-			'Grid_Slider',
-			'Careers_Form',
-			'Catering_Form',
-			'Order_Details',
-			'Order_History',
-			'Favorite_Order',
-			'Unsubscribe_Form',
-			'Bfriday_Contact_Form'
+			
 		);
 
 		$registered_shortcodes = array();
@@ -271,32 +236,7 @@ class WP_FoodTec {
 	 */
 	private function register_widgets() {
 		$widgets = array(
-			'Subscribe_Form',
-			'SMS_Form',
-			'Social_Icons',
-			'Store_Gift_Card_Links',
-			'Store_Hours',
-			'Store_Info',
-			'Store_Links',
-			'Store_Menu',
-			'Carousel',
-			'Order_Tracker',
-			'Featured_Comments',
-			'Register_Promo',
-			'Customer_App',
-			'Map',
-			'Register_Form',
-			'Page',
-			'OpenTable',
-			'Gift_Card_Balance_Form',
-			'Share',
-			'Facebook_Page',
-			'Order_Types',
-			'Login_Form',
 			'Contact_Form',
-			'Twitter_Timeline',
-			'Powered_By',
-			'LastFM_Recent_Tracks',
 		);
 
 		foreach ( $widgets as $class_name ) {
